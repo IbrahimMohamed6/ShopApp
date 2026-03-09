@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- BLL depends on DAL for models/repositories -->
+    <ProjectReference Include="..\ShopApp.DAL\ShopApp.DAL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Gives access to Microsoft.AspNetCore.Http and all ASP.NET Core types -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,92 @@
+@model ShopApp.PL.ViewModels.OrderDetailsVM
+@{
+    var o = Model.Order;
+    ViewData["Title"] = $"Order {o.OrderNumber}";
+    var badge = o.Status switch {
+        ShopApp.DAL.Models.OrderStatus.Pending    => "bg-warning text-dark",
+        ShopApp.DAL.Models.OrderStatus.Processing => "bg-info text-dark",
+        ShopApp.DAL.Models.OrderStatus.Shipped    => "bg-primary",
+        ShopApp.DAL.Models.OrderStatus.Delivered  => "bg-success",
+        ShopApp.DAL.Models.OrderStatus.Cancelled  => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">My Orders</a></li>
+        <li class="breadcrumb-item active">@o.OrderNumber</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <!-- Items -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-receipt me-2"></i>Order Items</span>
+                <span class="badge @badge fs-6">@o.Status</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-end">Price</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in o.Items)
+                        {
+                            <tr>
+                                <td>@item.ProductName</td>
+                                <td class="text-end">$@item.UnitPrice.ToString("0.00")</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end fw-bold">$@item.LineTotal.ToString("0.00")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td colspan="3">Order Total</td>
+                            <td class="text-end text-success fs-5">$@o.TotalAmount.ToString("0.00")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-secondary text-white">Order Info</div>
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt>Order #</dt>
+                    <dd><code>@o.OrderNumber</code></dd>
+                    <dt>Date</dt>
+                    <dd>@o.OrderDate.ToString("MMMM dd, yyyy — HH:mm")</dd>
+                    <dt>Status</dt>
+                    <dd><span class="badge @badge">@o.Status</span></dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (o.ShippingAddress is not null)
+        {
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">Shipping Address</div>
+                <div class="card-body">
+                    <address class="mb-0">
+                        @o.ShippingAddress.Street<br />
+                        @o.ShippingAddress.City, @o.ShippingAddress.Zip<br />
+                        @o.ShippingAddress.Country
+                    </address>
+                </div>
+            </div>
+        }
+    </div>
+</div>

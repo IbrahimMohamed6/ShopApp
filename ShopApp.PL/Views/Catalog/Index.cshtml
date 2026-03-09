@@ -1,0 +1,142 @@
+@model ShopApp.PL.ViewModels.CatalogIndexVM
+@{
+    ViewData["Title"] = "Product Catalog";
+}
+
+<div class="row g-4">
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white fw-semibold">
+                <i class="bi bi-grid-fill me-1"></i> Categories
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="Index"
+                   class="list-group-item list-group-item-action @(Model.CategoryId == null ? "active" : "")">
+                    All Products
+                    <span class="badge bg-secondary float-end">@Model.PagedResult.TotalItems</span>
+                </a>
+                @foreach (var cat in Model.Categories.Where(c => c.ParentCategoryId == null))
+                {
+                    <a asp-action="Index" asp-route-categoryId="@cat.CategoryId"
+                       class="list-group-item list-group-item-action @(Model.CategoryId == cat.CategoryId ? "active" : "")">
+                        <strong>@cat.Name</strong>
+                    </a>
+                    @foreach (var sub in Model.Categories.Where(c => c.ParentCategoryId == cat.CategoryId))
+                    {
+                        <a asp-action="Index" asp-route-categoryId="@sub.CategoryId"
+                           class="list-group-item list-group-item-action ps-4 @(Model.CategoryId == sub.CategoryId ? "active" : "")">
+                            ↳ @sub.Name
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Main ───────────────────────────────────────────────────── -->
+    <div class="col-lg-9">
+        <!-- Search / Sort bar -->
+        <form method="get" class="d-flex gap-2 mb-4">
+            <input name="categoryId" type="hidden" value="@Model.CategoryId" />
+            <input name="q" class="form-control" placeholder="Search products…"
+                   value="@Model.Search" />
+            <select name="sort" class="form-select w-auto">
+                <option value="">Newest</option>
+                <option value="price_asc" selected="@(Model.Sort == "price_asc" ? "selected" : null)">Price ↑</option>
+                <option value="price_desc" selected="@(Model.Sort == "price_desc" ? "selected" : null)">Price ↓</option>
+                <option value="name" selected="@(Model.Sort == "name" ? "selected" : null)">Name A–Z</option>
+            </select>
+            <button class="btn btn-primary px-3" type="submit">
+                <i class="bi bi-search"></i>
+            </button>
+        </form>
+
+        <p class="text-muted small mb-3">
+            Showing @Model.PagedResult.Items.Count() of @Model.PagedResult.TotalItems products
+        </p>
+
+        @if (!Model.PagedResult.Items.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-search fs-1 d-block mb-2"></i>
+                No products matched your search.
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+                @foreach (var p in Model.PagedResult.Items)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow-sm product-card">
+                            @if (!string.IsNullOrEmpty(p.ImageUrl))
+                            {
+                                <img src="@p.ImageUrl" class="card-img-top"
+                                     style="height:180px;object-fit:cover" alt="@p.Name" />
+                            }
+                            else
+                            {
+                                <div class="bg-light d-flex align-items-center justify-content-center"
+                                     style="height:180px">
+                                    <i class="bi bi-image text-secondary fs-1"></i>
+                                </div>
+                            }
+                            <div class="card-body d-flex flex-column">
+                                <p class="text-muted small mb-1">@p.CategoryName</p>
+                                <h6 class="card-title fw-semibold">@p.Name</h6>
+                                <div class="mt-auto">
+                                    <p class="text-success fw-bold fs-5 mb-2">
+                                        $@p.Price.ToString("0.00")
+                                    </p>
+                                    @if (p.StockQuantity == 0)
+                                    {
+                                        <span class="badge bg-danger mb-2">Out of Stock</span>
+                                    }
+                                    else if (p.StockQuantity < 5)
+                                    {
+                                        <span class="badge bg-warning text-dark mb-2">
+                                            Only @p.StockQuantity left
+                                        </span>
+                                    }
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Details" asp-route-id="@p.ProductId"
+                                           class="btn btn-outline-primary btn-sm flex-fill">
+                                            Details
+                                        </a>
+                                        <form asp-controller="Cart" asp-action="Add" method="post">
+                                            <input type="hidden" name="productId" value="@p.ProductId" />
+                                            <button class="btn btn-primary btn-sm"
+                                                    disabled="@(p.StockQuantity == 0 ? "disabled" : null)">
+                                                <i class="bi bi-cart-plus"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.PagedResult.TotalPages > 1)
+            {
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= Model.PagedResult.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-q="@Model.Search"
+                                   asp-route-sort="@Model.Sort">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,36 @@
+/* ShopApp 3-Tier — Site Styles */
+
+body {
+    background-color: #f8f9fa;
+}
+
+/* Smooth card borders */
+.card {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 0.75rem;
+}
+
+.card-header {
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+/* Hover lift for product cards */
+.product-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
+}
+
+/* Pagination */
+.page-link {
+    border-radius: 0.4rem;
+    margin: 0 2px;
+}
+
+/* Navbar */
+.navbar-brand {
+    letter-spacing: 0.3px;
+}

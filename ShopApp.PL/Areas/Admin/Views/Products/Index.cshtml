@@ -1,0 +1,68 @@
+@model ShopApp.PL.ViewModels.AdminProductIndexVM
+@{ ViewData["Title"] = "Products"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-box-seam me-2"></i>Products</h2>
+    <a asp-action="Create" class="btn btn-success">
+        <i class="bi bi-plus-circle me-1"></i> New Product
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-center">Stock</th>
+                    <th class="text-center">Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Products)
+                {
+                    <tr>
+                        <td class="text-muted small">@p.ProductId</td>
+                        <td><strong>@p.Name</strong></td>
+                        <td><code>@p.SKU</code></td>
+                        <td class="text-muted small">@p.CategoryName</td>
+                        <td class="text-end fw-semibold">$@p.Price.ToString("0.00")</td>
+                        <td class="text-center">
+                            <span class="badge @(p.StockQuantity == 0 ? "bg-danger" : p.StockQuantity < 5 ? "bg-warning text-dark" : "bg-success")">
+                                @p.StockQuantity
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            @if (p.IsActive)
+                            {
+                                <span class="badge bg-success"><i class="bi bi-check"></i></span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Off</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@p.ProductId"
+                               class="btn btn-outline-primary btn-sm me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" method="post" class="d-inline"
+                                  onsubmit="return confirm('Deactivate @p.Name?')">
+                                <input type="hidden" name="id" value="@p.ProductId" />
+                                <button class="btn btn-outline-warning btn-sm" title="Deactivate">
+                                    <i class="bi bi-eye-slash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

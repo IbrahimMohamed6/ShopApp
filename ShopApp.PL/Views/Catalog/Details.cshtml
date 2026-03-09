@@ -1,0 +1,90 @@
+@model ShopApp.PL.ViewModels.ProductDetailsVM
+@{
+    ViewData["Title"] = Model.Product.Name;
+    var p = Model.Product;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index">Catalog</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Catalog" asp-action="Index" asp-route-categoryId="@p.CategoryId">@p.CategoryName</a>
+        </li>
+        <li class="breadcrumb-item active">@p.Name</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        @if (!string.IsNullOrEmpty(p.ImageUrl))
+        {
+            <img src="@p.ImageUrl" class="img-fluid rounded shadow" alt="@p.Name" />
+        }
+        else
+        {
+            <div class="bg-light rounded d-flex align-items-center justify-content-center shadow-sm"
+                 style="height:320px">
+                <i class="bi bi-image text-secondary" style="font-size:5rem"></i>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-7">
+        <h2 class="fw-bold">@p.Name</h2>
+        <p class="text-muted mb-1">SKU: <code>@p.SKU</code></p>
+        <p class="text-muted mb-3">Category: <strong>@p.CategoryName</strong></p>
+
+        <h3 class="text-success fw-bold mb-3">$@p.Price.ToString("0.00")</h3>
+
+        @if (p.StockQuantity > 0)
+        {
+            <span class="badge bg-success fs-6 mb-3">
+                <i class="bi bi-check-circle me-1"></i> In Stock (@p.StockQuantity available)
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-danger fs-6 mb-3">Out of Stock</span>
+        }
+
+        @if (!string.IsNullOrEmpty(p.Description))
+        {
+            <p class="mb-4 text-muted">@p.Description</p>
+        }
+
+        @if (p.StockQuantity > 0)
+        {
+            <form asp-controller="Cart" asp-action="Add" method="post"
+                  class="d-flex gap-3 align-items-center">
+                <input type="hidden" name="productId" value="@p.ProductId" />
+                <input type="number" name="qty" value="1" min="1"
+                       max="@p.StockQuantity" class="form-control"
+                       style="width:90px" />
+                <button class="btn btn-primary btn-lg px-4">
+                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (Model.RelatedProducts.Any())
+{
+    <hr class="my-5" />
+    <h5 class="fw-semibold mb-3">Related Products</h5>
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+        @foreach (var rp in Model.RelatedProducts)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">@rp.Name</h6>
+                        <p class="text-success fw-bold mt-auto">$@rp.Price.ToString("0.00")</p>
+                        <a asp-action="Details" asp-route-id="@rp.ProductId"
+                           class="btn btn-outline-primary btn-sm w-100">View</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

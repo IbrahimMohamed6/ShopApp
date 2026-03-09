@@ -1,0 +1,108 @@
+@model ShopApp.PL.ViewModels.CheckoutVM
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h2 class="mb-4"><i class="bi bi-credit-card me-2"></i>Checkout</h2>
+
+<form asp-controller="Orders" asp-action="Checkout" method="post">
+
+    <div class="row g-4">
+        <!-- Left: Address -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white fw-semibold">
+                    <i class="bi bi-geo-alt me-1"></i> Shipping Address
+                </div>
+                <div class="card-body">
+                    @if (Model.SavedAddresses.Any())
+                    {
+                        <p class="text-muted small mb-3">Select a saved address:</p>
+                        @foreach (var addr in Model.SavedAddresses)
+                        {
+                            <div class="form-check mb-2 p-3 border rounded @(Model.SelectedAddressId == addr.AddressId ? "border-primary bg-light" : "")">
+                                <input class="form-check-input" type="radio"
+                                       name="SelectedAddressId"
+                                       id="addr_@addr.AddressId"
+                                       value="@addr.AddressId"
+                                       @(Model.SelectedAddressId == addr.AddressId ? "checked" : "") />
+                                <label class="form-check-label" for="addr_@addr.AddressId">
+                                    <strong>@addr.Street</strong><br />
+                                    <span class="text-muted">@addr.City, @addr.Country @addr.Zip</span>
+                                    @if (addr.IsDefault)
+                                    {
+                                        <span class="badge bg-primary ms-2">Default</span>
+                                    }
+                                </label>
+                            </div>
+                        }
+                        <hr class="my-3" />
+                        <p class="text-muted small">Or enter a new address:</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-3">Enter your shipping address:</p>
+                    }
+
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label small">Country</label>
+                            <input asp-for="NewCountry" class="form-control" placeholder="e.g. Egypt" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">City</label>
+                            <input asp-for="NewCity" class="form-control" placeholder="e.g. Cairo" />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small">Street</label>
+                            <input asp-for="NewStreet" class="form-control" placeholder="Street address" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">ZIP Code</label>
+                            <input asp-for="NewZip" class="form-control" placeholder="ZIP" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Summary -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white fw-semibold">
+                    <i class="bi bi-receipt me-1"></i> Order Summary
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <tbody>
+                            @foreach (var item in Model.Cart.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        @item.ProductName
+                                        <span class="text-muted small">×@item.Quantity</span>
+                                    </td>
+                                    <td class="text-end">$@item.LineTotal.ToString("0.00")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light fw-bold">
+                                <td>Total</td>
+                                <td class="text-end text-success fs-5">
+                                    $@Model.Cart.Total.ToString("0.00")
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        <i class="bi bi-bag-check me-2"></i>Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
