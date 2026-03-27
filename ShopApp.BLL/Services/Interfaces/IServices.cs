@@ -27,6 +27,7 @@ namespace ShopApp.BLL.Services.Interfaces
         Task<ProductDto>  CreateAsync(ProductCreateDto dto);
         Task UpdateAsync(ProductUpdateDto dto);
         Task DeleteAsync(int id);           // soft-delete
+        Task HardDeleteAsync(int id);
     }
 
     // ────────────────────────────────────────────────────────────────────────

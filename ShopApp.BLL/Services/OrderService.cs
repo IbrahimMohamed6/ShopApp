@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using ShopApp.BLL.DTOs;
 using ShopApp.BLL.Mappers;
 using ShopApp.BLL.Services.Interfaces;
@@ -62,40 +61,47 @@ namespace ShopApp.BLL.Services
             if (!cart.Items.Any())
                 return Fail("Your cart is empty.");
 
-            // ── 1. Resolve shipping address ──────────────────────────────
-            int addressId;
-
-            if (dto.SelectedAddressId.HasValue)
-            {
-                var addr = await _addressRepo.GetByIdAsync(dto.SelectedAddressId.Value);
-                if (addr is null || addr.UserId != userId)
-                    return Fail("Selected address is invalid.");
-                addressId = addr.AddressId;
-            }
-            else
+            // Pre-validate new address fields before opening a transaction
+            if (!dto.SelectedAddressId.HasValue)
             {
                 if (string.IsNullOrWhiteSpace(dto.NewCountry) ||
                     string.IsNullOrWhiteSpace(dto.NewCity)    ||
                     string.IsNullOrWhiteSpace(dto.NewStreet)  ||
                     string.IsNullOrWhiteSpace(dto.NewZip))
                     return Fail("Please provide a complete shipping address.");
-
-                var newAddr = new Address
-                {
-                    UserId  = userId,
-                    Country = dto.NewCountry!,
-                    City    = dto.NewCity!,
-                    Street  = dto.NewStreet!,
-                    Zip     = dto.NewZip!
-                };
-                await _addressRepo.AddAsync(newAddr);
-                addressId = newAddr.AddressId;
             }
 
-            // ── Atomic transaction ───────────────────────────────────────
+            // ── Atomic transaction (wraps address + order creation) ──────
             await using var tx = await _db.Database.BeginTransactionAsync();
             try
             {
+                // 1. Resolve shipping address inside the transaction
+                int addressId;
+
+                if (dto.SelectedAddressId.HasValue)
+                {
+                    var addr = await _addressRepo.GetByIdAsync(dto.SelectedAddressId.Value);
+                    if (addr is null || addr.UserId != userId)
+                    {
+                        await tx.RollbackAsync();
+                        return Fail("Selected address is invalid.");
+                    }
+                    addressId = addr.AddressId;
+                }
+                else
+                {
+                    var newAddr = new Address
+                    {
+                        UserId  = userId,
+                        Country = dto.NewCountry!,
+                        City    = dto.NewCity!,
+                        Street  = dto.NewStreet!,
+                        Zip     = dto.NewZip!
+                    };
+                    await _addressRepo.AddAsync(newAddr);
+                    addressId = newAddr.AddressId;
+                }
+
                 // 2. Validate stock
                 foreach (var item in cart.Items)
                 {

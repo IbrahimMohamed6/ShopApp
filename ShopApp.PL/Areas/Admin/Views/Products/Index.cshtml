@@ -8,6 +8,42 @@
     </a>
 </div>
 
+<!-- Search / Filter bar -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-auto">
+                <select name="categoryId" class="form-select">
+                    <option value="">All Categories</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.CategoryId" selected="@(Model.CategoryId == c.CategoryId ? "selected" : null)">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-auto text-nowrap">
+                <input name="q" class="form-control" placeholder="Search by name/SKU…" value="@Model.Search" />
+            </div>
+            <div class="col-md-auto">
+                <select name="sort" class="form-select">
+                    <option value="">Newest First</option>
+                    <option value="price_asc" selected="@(Model.Sort == "price_asc" ? "selected" : null)">Price: Low to High</option>
+                    <option value="price_desc" selected="@(Model.Sort == "price_desc" ? "selected" : null)">Price: High to Low</option>
+                    <option value="name" selected="@(Model.Sort == "name" ? "selected" : null)">Name: A-Z</option>
+                </select>
+            </div>
+            <div class="col-md-auto ms-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-filter"></i> Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<p class="text-muted small mb-3">
+    Showing @Model.PagedResult.Items.Count() of @Model.PagedResult.TotalItems products
+</p>
+
 <div class="card shadow-sm">
     <div class="card-body p-0">
         <table class="table table-hover align-middle mb-0">
@@ -24,7 +60,13 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var p in Model.Products)
+                @if (!Model.PagedResult.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No products found.</td>
+                    </tr>
+                }
+                @foreach (var p in Model.PagedResult.Items)
                 {
                     <tr>
                         <td class="text-muted small">@p.ProductId</td>
@@ -53,10 +95,19 @@
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form asp-action="Delete" method="post" class="d-inline"
-                                  onsubmit="return confirm('Deactivate @p.Name?')">
+                                  data-confirm="Deactivate @p.Name?"
+                                  onsubmit="return confirm(this.dataset.confirm)">
                                 <input type="hidden" name="id" value="@p.ProductId" />
                                 <button class="btn btn-outline-warning btn-sm" title="Deactivate">
                                     <i class="bi bi-eye-slash"></i>
+                                </button>
+                            </form>
+                            <form asp-action="HardDelete" method="post" class="d-inline"
+                                  data-confirm="Permanently delete @p.Name? This action cannot be undone."
+                                  onsubmit="return confirm(this.dataset.confirm)">
+                                <input type="hidden" name="id" value="@p.ProductId" />
+                                <button class="btn btn-outline-danger btn-sm" title="Permanently Delete">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                         </td>
@@ -66,3 +117,21 @@
         </table>
     </div>
 </div>
+
+@if (Model.PagedResult.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= Model.PagedResult.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-q="@Model.Search"
+                       asp-route-sort="@Model.Sort">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

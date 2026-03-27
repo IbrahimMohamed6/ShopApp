@@ -8,7 +8,7 @@
 
 <div class="card shadow-sm" style="max-width:750px">
     <div class="card-body">
-        <form asp-action="Edit" method="post">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <input asp-for="ProductId" type="hidden" />
             <div class="row g-3">
                 <div class="col-md-8">
@@ -42,8 +42,18 @@
                     <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 </div>
                 <div class="col-md-9">
-                    <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL</label>
-                    <input asp-for="ImageUrl" class="form-control" />
+                    <label class="form-label fw-semibold">Product Image</label>
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.ImageUrl" alt="Current image"
+                                 class="img-thumbnail" style="height:100px;object-fit:cover" />
+                            <small class="text-muted d-block mt-1">Current image</small>
+                        </div>
+                    }
+                    <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
+                    <input asp-for="ImageUrl" type="hidden" />
+                    <small class="text-muted">Leave empty to keep the current image.</small>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <div class="form-check mb-2">

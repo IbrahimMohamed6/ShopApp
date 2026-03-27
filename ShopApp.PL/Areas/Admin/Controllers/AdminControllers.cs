@@ -43,13 +43,22 @@ namespace ShopApp.PL.Areas.Admin.Controllers
                 vm.AllCategories = await _categoryService.GetAllAsync();
                 return View(vm);
             }
-            await _categoryService.CreateAsync(new CategoryCreateDto
+            try
             {
-                Name             = vm.Name,
-                ParentCategoryId = vm.ParentCategoryId
-            });
-            TempData["Success"] = "Category created.";
-            return RedirectToAction("Index");
+                await _categoryService.CreateAsync(new CategoryCreateDto
+                {
+                    Name             = vm.Name,
+                    ParentCategoryId = vm.ParentCategoryId
+                });
+                TempData["Success"] = "Category created.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to create category: {ex.Message}";
+                vm.AllCategories = await _categoryService.GetAllAsync();
+                return View(vm);
+            }
         }
 
         public async Task<IActionResult> Edit(int id)
@@ -77,21 +86,38 @@ namespace ShopApp.PL.Areas.Admin.Controllers
                                    .Where(c => c.CategoryId != vm.CategoryId);
                 return View(vm);
             }
-            await _categoryService.UpdateAsync(new CategoryUpdateDto
+            try
             {
-                CategoryId       = vm.CategoryId,
-                Name             = vm.Name,
-                ParentCategoryId = vm.ParentCategoryId
-            });
-            TempData["Success"] = "Category updated.";
-            return RedirectToAction("Index");
+                await _categoryService.UpdateAsync(new CategoryUpdateDto
+                {
+                    CategoryId       = vm.CategoryId,
+                    Name             = vm.Name,
+                    ParentCategoryId = vm.ParentCategoryId
+                });
+                TempData["Success"] = "Category updated.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to update category: {ex.Message}";
+                vm.AllCategories = (await _categoryService.GetAllAsync())
+                                   .Where(c => c.CategoryId != vm.CategoryId);
+                return View(vm);
+            }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            await _categoryService.DeleteAsync(id);
-            TempData["Success"] = "Category deleted.";
+            try
+            {
+                await _categoryService.DeleteAsync(id);
+                TempData["Success"] = "Category deleted.";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Cannot delete category because it's in use.";
+            }
             return RedirectToAction("Index");
         }
     }
@@ -102,21 +128,37 @@ namespace ShopApp.PL.Areas.Admin.Controllers
     [Area("Admin"), Authorize(Roles = "Admin")]
     public class ProductsController : Controller
     {
-        private readonly IProductService  _productService;
-        private readonly ICategoryService _categoryService;
+        private readonly IProductService     _productService;
+        private readonly ICategoryService    _categoryService;
+        private readonly IWebHostEnvironment _env;
 
         public ProductsController(
-            IProductService  productService,
-            ICategoryService categoryService)
+            IProductService     productService,
+            ICategoryService    categoryService,
+            IWebHostEnvironment env)
         {
             _productService  = productService;
             _categoryService = categoryService;
+            _env             = env;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            int? categoryId, string? q, string? sort, int page = 1)
         {
-            var result = await _productService.GetPagedAsync(null, null, null, 1, 200);
-            return View(new AdminProductIndexVM { Products = result.Items });
+            const int pageSize = 10;
+            var result = await _productService.GetPagedAsync(categoryId, q, sort, page, pageSize);
+            var categories = await _categoryService.GetAllAsync();
+
+            var vm = new AdminProductIndexVM
+            {
+                PagedResult = result,
+                Categories  = categories,
+                CategoryId  = categoryId,
+                Search      = q,
+                Sort        = sort,
+                Page        = page
+            };
+            return View(vm);
         }
 
         public async Task<IActionResult> Create()
@@ -136,19 +178,31 @@ namespace ShopApp.PL.Areas.Admin.Controllers
                 vm.Categories = await _categoryService.GetAllAsync();
                 return View(vm);
             }
-            await _productService.CreateAsync(new ProductCreateDto
+            try
             {
-                Name          = vm.Name,
-                SKU           = vm.SKU,
-                Price         = vm.Price,
-                StockQuantity = vm.StockQuantity,
-                CategoryId    = vm.CategoryId,
-                Description   = vm.Description,
-                ImageUrl      = vm.ImageUrl,
-                IsActive      = vm.IsActive
-            });
-            TempData["Success"] = "Product created.";
-            return RedirectToAction("Index");
+                if (vm.ImageFile is { Length: > 0 })
+                    vm.ImageUrl = await SaveImageAsync(vm.ImageFile);
+
+                await _productService.CreateAsync(new ProductCreateDto
+                {
+                    Name          = vm.Name,
+                    SKU           = vm.SKU,
+                    Price         = vm.Price,
+                    StockQuantity = vm.StockQuantity,
+                    CategoryId    = vm.CategoryId,
+                    Description   = vm.Description,
+                    ImageUrl      = vm.ImageUrl,
+                    IsActive      = vm.IsActive
+                });
+                TempData["Success"] = "Product created.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to create product: {ex.InnerException?.Message ?? ex.Message}";
+                vm.Categories = await _categoryService.GetAllAsync();
+                return View(vm);
+            }
         }
 
         public async Task<IActionResult> Edit(int id)
@@ -180,27 +234,71 @@ namespace ShopApp.PL.Areas.Admin.Controllers
                 vm.Categories = await _categoryService.GetAllAsync();
                 return View(vm);
             }
-            await _productService.UpdateAsync(new ProductUpdateDto
+            try
             {
-                ProductId     = vm.ProductId,
-                Name          = vm.Name,
-                SKU           = vm.SKU,
-                Price         = vm.Price,
-                StockQuantity = vm.StockQuantity,
-                CategoryId    = vm.CategoryId,
-                Description   = vm.Description,
-                ImageUrl      = vm.ImageUrl,
-                IsActive      = vm.IsActive
-            });
-            TempData["Success"] = "Product updated.";
-            return RedirectToAction("Index");
+                if (vm.ImageFile is { Length: > 0 })
+                    vm.ImageUrl = await SaveImageAsync(vm.ImageFile);
+
+                await _productService.UpdateAsync(new ProductUpdateDto
+                {
+                    ProductId     = vm.ProductId,
+                    Name          = vm.Name,
+                    SKU           = vm.SKU,
+                    Price         = vm.Price,
+                    StockQuantity = vm.StockQuantity,
+                    CategoryId    = vm.CategoryId,
+                    Description   = vm.Description,
+                    ImageUrl      = vm.ImageUrl,
+                    IsActive      = vm.IsActive
+                });
+                TempData["Success"] = "Product updated.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to update product: {ex.InnerException?.Message ?? ex.Message}";
+                vm.Categories = await _categoryService.GetAllAsync();
+                return View(vm);
+            }
+        }
+
+        private async Task<string> SaveImageAsync(IFormFile file)
+        {
+            var folder = Path.Combine(_env.WebRootPath, "images", "products");
+            Directory.CreateDirectory(folder);
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            await using var stream = new FileStream(Path.Combine(folder, fileName), FileMode.Create);
+            await file.CopyToAsync(stream);
+            return $"/images/products/{fileName}";
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            await _productService.DeleteAsync(id);
-            TempData["Success"] = "Product deactivated.";
+            try
+            {
+                await _productService.DeleteAsync(id);
+                TempData["Success"] = "Product deactivated.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to deactivate product: {ex.Message}";
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> HardDelete(int id)
+        {
+            try
+            {
+                await _productService.HardDeleteAsync(id);
+                TempData["Success"] = "Product permanently deleted.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to delete product: {ex.Message}";
+            }
             return RedirectToAction("Index");
         }
     }
@@ -241,8 +339,15 @@ namespace ShopApp.PL.Areas.Admin.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(AdminOrderUpdateVM vm)
         {
-            await _orderService.UpdateStatusAsync(vm.OrderId, vm.Status);
-            TempData["Success"] = "Order status updated.";
+            try
+            {
+                await _orderService.UpdateStatusAsync(vm.OrderId, vm.Status);
+                TempData["Success"] = "Order status updated.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Failed to update order: {ex.Message}";
+            }
             return RedirectToAction("Details", new { id = vm.OrderId });
         }
     }

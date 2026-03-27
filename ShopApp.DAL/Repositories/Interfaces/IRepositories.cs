@@ -34,6 +34,7 @@ namespace ShopApp.DAL.Repositories.Interfaces
 
         Task<Product?> GetByIdWithCategoryAsync(int id);
         Task DecreaseStockAsync(int productId, int qty);
+        Task HardDeleteAsync(int id);
     }
 
     // ────────────────────────────────────────────────────────────────────────

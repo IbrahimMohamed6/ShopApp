@@ -8,7 +8,7 @@
 
 <div class="card shadow-sm" style="max-width:750px">
     <div class="card-body">
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div class="row g-3">
                 <div class="col-md-8">
                     <label asp-for="Name" class="form-label fw-semibold"></label>
@@ -45,8 +45,8 @@
                     <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 </div>
                 <div class="col-md-9">
-                    <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL</label>
-                    <input asp-for="ImageUrl" class="form-control" placeholder="https://…" />
+                    <label asp-for="ImageFile" class="form-label fw-semibold">Product Image</label>
+                    <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <div class="form-check mb-2">

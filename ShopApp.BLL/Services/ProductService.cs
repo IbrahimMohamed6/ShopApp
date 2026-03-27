@@ -73,5 +73,10 @@ namespace ShopApp.BLL.Services
         {
             await _repo.DeleteAsync(id); // soft-delete in ProductRepository
         }
+
+        public async Task HardDeleteAsync(int id)
+        {
+            await _repo.HardDeleteAsync(id);
+        }
     }
 }

@@ -12,6 +12,7 @@ namespace ShopApp.DAL.Repositories
         public async Task<IEnumerable<Order>> GetByUserAsync(string userId) =>
             await _db.Orders
                      .Include(o => o.ShippingAddress)
+                     .Include(o => o.OrderItems).ThenInclude(oi => oi.Product)
                      .Where(o => o.UserId == userId)
                      .OrderByDescending(o => o.OrderDate)
                      .ToListAsync();
@@ -20,6 +21,7 @@ namespace ShopApp.DAL.Repositories
             await _db.Orders
                      .Include(o => o.User)
                      .Include(o => o.ShippingAddress)
+                     .Include(o => o.OrderItems).ThenInclude(oi => oi.Product)
                      .OrderByDescending(o => o.OrderDate)
                      .ToListAsync();
 

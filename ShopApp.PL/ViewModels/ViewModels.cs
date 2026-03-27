@@ -84,7 +84,12 @@ namespace ShopApp.PL.ViewModels
     // ────────────────────────────────────────────────────────────────────────
     public class AdminProductIndexVM
     {
-        public IEnumerable<ProductDto> Products { get; set; } = Enumerable.Empty<ProductDto>();
+        public ProductPagedResultDto PagedResult { get; set; } = new();
+        public IEnumerable<CategoryDto> Categories { get; set; } = Enumerable.Empty<CategoryDto>();
+        public int?    CategoryId { get; set; }
+        public string? Search     { get; set; }
+        public string? Sort       { get; set; }
+        public int     Page       { get; set; } = 1;
     }
 
     public class AdminProductFormVM
@@ -106,9 +111,10 @@ namespace ShopApp.PL.ViewModels
         [Required(ErrorMessage = "Please select a category")]
         public int CategoryId { get; set; }
 
-        public string? Description { get; set; }
-        public string? ImageUrl    { get; set; }
-        public bool    IsActive    { get; set; } = true;
+        public string?    Description { get; set; }
+        public string?    ImageUrl    { get; set; }
+        public IFormFile? ImageFile   { get; set; }
+        public bool       IsActive    { get; set; } = true;
 
         public IEnumerable<CategoryDto> Categories { get; set; } = Enumerable.Empty<CategoryDto>();
     }

@@ -66,5 +66,15 @@ namespace ShopApp.DAL.Repositories
                 await _db.SaveChangesAsync();
             }
         }
+
+        public async Task HardDeleteAsync(int id)
+        {
+            var product = await _set.FindAsync(id);
+            if (product is not null)
+            {
+                _set.Remove(product);
+                await _db.SaveChangesAsync();
+            }
+        }
     }
 }
